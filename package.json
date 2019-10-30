@@ -1,0 +1,12 @@
+{
+  "name": "netlify-cms-aws-github-auth",
+  "version": "0.1.0",
+  "description": "Authorizing Netlify CMS via AWS Lambda and API Gateway",
+  "main": "lambda.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Dylan Awalt-Conley",
+  "license": "ISC",
+  "dependencies": {}
+}

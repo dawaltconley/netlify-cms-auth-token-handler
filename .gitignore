@@ -1,0 +1,16 @@
+_site/
+node_modules/
+env/
+PPA-*/
+total-energy*.json
+lambda.zip
+.publish/
+.sass-cache/
+.lambda-config/
+.jekyll-metadata
+.DS_Store
+~$*
+*~
+*.swp
+*.swo
+sh.exe.stackdump
