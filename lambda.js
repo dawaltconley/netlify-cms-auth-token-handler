@@ -4,9 +4,16 @@ const qs = require('querystring')
 const extractCode = ({ queryStringParameters={} }) => queryStringParameters.code
 
 exports.handler = async (event, context) => {
-    const oauthProvider = event.stageVariables.OAUTH_PROVIDER || 'github'
-    const originPattern = event.stageVariables.DOMAIN
-    if (!originPattern) throw new Error('Must set origin in DOMAIN stage variable.')
+    const {
+        GIT_HOSTNAME = 'https://github.com',
+        OAUTH_TOKEN_PATH = '/login/oauth/access_token',
+        OAUTH_PROVIDER = 'github',
+        DOMAIN, CLIENT_ID, CLIENT_SECRET
+    } = event.stageVariables || {}
+
+    if (!DOMAIN) throw new Error('Must provide origin in stage variable.')
+    if (!CLIENT_ID) throw new Error('Must provide client ID in stage variable.')
+    if (!CLIENT_SECRET) throw new Error('Must provide slient secret in stage variable.')
 
     const code = extractCode(event)
     if (!code) throw new Error('Did not get expected query string: "code"')
@@ -16,7 +23,8 @@ exports.handler = async (event, context) => {
     try {
         const response = await axios({
             method: 'post',
-            url: 'https://github.com/login/oauth/access_token',
+            baseURL: GIT_HOSTNAME,
+            url: OAUTH_TOKEN_PATH,
             params: {
                 client_id: event.stageVariables.CLIENT_ID,
                 client_secret: event.stageVariables.CLIENT_SECRET,
@@ -26,7 +34,7 @@ exports.handler = async (event, context) => {
         mess = 'success'
         content = {
             token: qs.parse(response.data).access_token,
-            provider: oauthProvider
+            provider: OAUTH_PROVIDER
         }
     } catch (e) {
         console.error('Access Token Error', e)
@@ -39,20 +47,20 @@ exports.handler = async (event, context) => {
             (function() {
                 function receiveMessage(e) {
                     console.log("receiveMessage %o", e)
-                    if (!e.origin.match(${JSON.stringify(originPattern)})) {
+                    if (!e.origin.match(${JSON.stringify(DOMAIN)})) {
                         console.log('Invalid origin: %s', e.origin);
                         return;
                     }
                     // send message to main window with da app
                     window.opener.postMessage(
-                        'authorization:${oauthProvider}:${mess}:${JSON.stringify(content)}',
+                        'authorization:${OAUTH_PROVIDER}:${mess}:${JSON.stringify(content)}',
                         e.origin
                     )
                 }
                 window.addEventListener("message", receiveMessage, false)
                 // Start handshare with parent
-                console.log("Sending message: %o", "${oauthProvider}")
-                window.opener.postMessage("authorizing:${oauthProvider}", "*")
+                console.log("Sending message: %o", "${OAUTH_PROVIDER}")
+                window.opener.postMessage("authorizing:${OAUTH_PROVIDER}", "*")
             })()
         </script>`
 
