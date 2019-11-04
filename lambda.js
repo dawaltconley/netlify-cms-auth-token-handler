@@ -1,7 +1,6 @@
 const axios = require('axios')
+const cookie = require('cookie')
 const qs = require('querystring')
-
-const extractCode = ({ queryStringParameters={} }) => queryStringParameters.code
 
 exports.handler = async (event, context) => {
     const {
@@ -11,11 +10,20 @@ exports.handler = async (event, context) => {
         DOMAIN, CLIENT_ID, CLIENT_SECRET
     } = event.stageVariables || {}
 
+    const returnState = event.queryStringParameters.state
+    let { state:cookieState } = cookie.parse(event.headers.Cookie)
+
+    if (!(cookieState && returnState && cookieState === returnState))
+        return {
+            statusCode: 400,
+            body: { message: 'State does not match.' }
+        }
+
     if (!DOMAIN) throw new Error('Must provide origin in stage variable.')
     if (!CLIENT_ID) throw new Error('Must provide client ID in stage variable.')
     if (!CLIENT_SECRET) throw new Error('Must provide slient secret in stage variable.')
 
-    const code = extractCode(event)
+    const code = event.queryStringParameters && event.queryStringParameters.code
     if (!code) throw new Error('Did not get expected query string: "code"')
 
     let mess, content
